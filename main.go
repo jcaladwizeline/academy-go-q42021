@@ -12,7 +12,7 @@ func main() {
 	http.Handle("/", router)
 	log.Println("Api running on port 8080")
 
-	err := http.ListenAndServe(":3000", router)
+	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		log.Println(err)
 		os.Exit(0)
