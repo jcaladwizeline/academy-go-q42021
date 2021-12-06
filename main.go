@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bootCampApi/api"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/jcaladwizeline/academy-go-q42021/api"
 )
 
 func main() {

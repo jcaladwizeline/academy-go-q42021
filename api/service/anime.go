@@ -1,7 +1,6 @@
 package service
 
 import (
-	animeI "bootCampApi/api/interfaces"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	animeI "github.com/jcaladwizeline/academy-go-q42021/api/model"
 
 	"github.com/fatih/structs"
 )
@@ -39,13 +40,13 @@ func GetAllAnimes() []animeI.AnimeStruct {
 	var response = make([]animeI.AnimeStruct, len(records))
 	for row, content := range records {
 
-		animeId, err := strconv.Atoi(content[0])
+		animeID, err := strconv.Atoi(content[0])
 		if err != nil {
 			return nil
 		}
 
 		singleRow := animeI.AnimeStruct{
-			AnimeId:  animeId,
+			AnimeID:  animeID,
 			Title:    content[1],
 			Synopsis: content[2],
 			Studio:   content[3],
@@ -59,7 +60,7 @@ func GetAllAnimes() []animeI.AnimeStruct {
 func GetAnimeById(id string) animeI.AnimeStruct {
 	var s animeI.AnimeStruct
 	// check params
-	idValue := 0
+	var idValue int
 	if id != "" {
 		row, err := strconv.Atoi(id)
 		if err != nil {
@@ -108,19 +109,17 @@ func GetAnimeById(id string) animeI.AnimeStruct {
 	var response = make([]animeI.AnimeStruct, len(records))
 	for row, content := range records {
 
-		animeId, err := strconv.Atoi(content[0])
+		animeID, err := strconv.Atoi(content[0])
 		if err != nil {
 			return s
 		}
 
-		singleRow := animeI.AnimeStruct{
-			AnimeId:  animeId,
+		response[row] = animeI.AnimeStruct{
+			AnimeID:  animeID,
 			Title:    content[1],
 			Synopsis: content[2],
 			Studio:   content[3],
 		}
-
-		response[row] = singleRow
 	}
 	return response[0]
 }
@@ -129,8 +128,7 @@ func PostAnimeById(id string) int {
 	animeData := animeByIDExternalAPI(id)
 	animeValues := make([]string, 0)
 	for _, v := range structs.Values(animeData) {
-		temp := fmt.Sprint(v)
-		animeValues = append(animeValues, temp)
+		animeValues = append(animeValues, fmt.Sprint(v))
 	}
 	// open csv
 	f, err := os.OpenFile("test.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -165,12 +163,12 @@ func animeByIDExternalAPI(id string) animeI.AnimeStruct {
 	}
 	var result map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&result)
-	animeId, _ := result["mal_id"].(float64)
+	animeID, _ := result["mal_id"].(float64)
 	title := strings.Replace(result["title"].(string), ",", "", -1)
 	synopsis := strings.Replace(result["synopsis"].(string), ",", "", -1)
 	studio := strings.Replace(result["studios"].([]interface{})[0].(map[string]interface{})["name"].(string), ",", "", -1)
 	animeData := animeI.AnimeStruct{
-		AnimeId:  int(animeId),
+		AnimeID:  int(animeID),
 		Title:    title,
 		Synopsis: synopsis,
 		Studio:   studio,
@@ -185,20 +183,20 @@ func worker(t string, jobs <-chan []string, results chan<- animeI.AnimeStruct) {
 			if !ok {
 				return
 			}
-			animeId, err := strconv.Atoi(job[0])
+			animeID, err := strconv.Atoi(job[0])
 			if err != nil {
 				return
 			}
 
 			anime := animeI.AnimeStruct{
-				AnimeId:  animeId,
+				AnimeID:  animeID,
 				Title:    job[1],
 				Synopsis: job[2],
 				Studio:   job[3],
 			}
-			if t == "odd" && anime.AnimeId%2 == 0 {
+			if t == "odd" && anime.AnimeID%2 == 0 {
 				results <- anime
-			} else if t == "even" && anime.AnimeId%2 != 0 {
+			} else if t == "even" && anime.AnimeID%2 != 0 {
 				results <- anime
 			}
 		}

@@ -1,11 +1,11 @@
-package controllers
+package controller
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
 
-	animeU "bootCampApi/api/service"
+	animeU "github.com/jcaladwizeline/academy-go-q42021/api/service"
 
 	"github.com/gorilla/mux"
 )
