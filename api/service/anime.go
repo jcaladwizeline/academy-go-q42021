@@ -22,6 +22,7 @@ func GetAllAnimes() []animeI.AnimeStruct {
 	f, err := os.Open("test.csv")
 	if err != nil {
 		log.Println("Unable to read test.csv", err)
+
 		return nil
 	}
 
@@ -35,13 +36,14 @@ func GetAllAnimes() []animeI.AnimeStruct {
 	csvReader := csv.NewReader(f)
 	records, err := csvReader.ReadAll()
 	if err != nil {
+
 		return nil
 	}
 	var response = make([]animeI.AnimeStruct, len(records))
 	for row, content := range records {
-
 		animeID, err := strconv.Atoi(content[0])
 		if err != nil {
+
 			return nil
 		}
 
@@ -54,6 +56,7 @@ func GetAllAnimes() []animeI.AnimeStruct {
 
 		response[row] = singleRow
 	}
+
 	return response
 }
 
@@ -64,6 +67,7 @@ func GetAnimeById(id string) animeI.AnimeStruct {
 	if id != "" {
 		row, err := strconv.Atoi(id)
 		if err != nil {
+
 			return s
 		}
 		idValue = row
@@ -73,6 +77,7 @@ func GetAnimeById(id string) animeI.AnimeStruct {
 	f, err := os.Open("test.csv")
 	if err != nil {
 		log.Println("Unable to read test.csv", err)
+
 		return s
 	}
 
@@ -86,6 +91,7 @@ func GetAnimeById(id string) animeI.AnimeStruct {
 	csvReader := csv.NewReader(f)
 	records, err := csvReader.ReadAll()
 	if err != nil {
+
 		return s
 	}
 	var newRecord []string
@@ -93,40 +99,34 @@ func GetAnimeById(id string) animeI.AnimeStruct {
 		value, _ := strconv.Atoi(records[i][0])
 		if value == idValue {
 			newRecord = records[i]
+
 			break
 		}
 	}
 
 	if id != "" && len(newRecord) == 0 {
 		log.Println("Record does not exists")
+
 		return s
 	}
-	if len(newRecord) > 1 {
-		x := [][]string{newRecord}
-		records = x
+
+	animeID, err := strconv.Atoi(newRecord[0])
+	if err != nil {
+
+		return s
 	}
 
-	var response = make([]animeI.AnimeStruct, len(records))
-	for row, content := range records {
-
-		animeID, err := strconv.Atoi(content[0])
-		if err != nil {
-			return s
-		}
-
-		response[row] = animeI.AnimeStruct{
-			AnimeID:  animeID,
-			Title:    content[1],
-			Synopsis: content[2],
-			Studio:   content[3],
-		}
+	return animeI.AnimeStruct{
+		AnimeID:  animeID,
+		Title:    newRecord[1],
+		Synopsis: newRecord[2],
+		Studio:   newRecord[3],
 	}
-	return response[0]
 }
 
 func PostAnimeById(id string) int {
 	animeData := animeByIDExternalAPI(id)
-	animeValues := make([]string, 0)
+	animeValues := make([]string, 1)
 	for _, v := range structs.Values(animeData) {
 		animeValues = append(animeValues, fmt.Sprint(v))
 	}
@@ -134,6 +134,7 @@ func PostAnimeById(id string) int {
 	f, err := os.OpenFile("test.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("Unable to open test.csv", err)
+
 		return http.StatusInternalServerError
 	}
 
@@ -149,6 +150,7 @@ func PostAnimeById(id string) int {
 
 	if err := csvwriter.Write(animeValues); err != nil {
 		log.Fatalln("error writing record to file", err)
+
 		return http.StatusInternalServerError
 	}
 
@@ -167,13 +169,13 @@ func animeByIDExternalAPI(id string) animeI.AnimeStruct {
 	title := strings.Replace(result["title"].(string), ",", "", -1)
 	synopsis := strings.Replace(result["synopsis"].(string), ",", "", -1)
 	studio := strings.Replace(result["studios"].([]interface{})[0].(map[string]interface{})["name"].(string), ",", "", -1)
-	animeData := animeI.AnimeStruct{
+
+	return animeI.AnimeStruct{
 		AnimeID:  int(animeID),
 		Title:    title,
 		Synopsis: synopsis,
 		Studio:   studio,
 	}
-	return animeData
 }
 
 func worker(t string, jobs <-chan []string, results chan<- animeI.AnimeStruct) {
@@ -181,10 +183,12 @@ func worker(t string, jobs <-chan []string, results chan<- animeI.AnimeStruct) {
 		select {
 		case job, ok := <-jobs:
 			if !ok {
+
 				return
 			}
 			animeID, err := strconv.Atoi(job[0])
 			if err != nil {
+
 				return
 			}
 
@@ -208,6 +212,7 @@ func WorkerPool(numJobs int, itemsPerWorker int, jobType string) ([]animeI.Anime
 	f, err := os.Open("test.csv")
 	if err != nil {
 		log.Println("Unable to read test.csv", err)
+
 		return nil, err
 	}
 
@@ -235,9 +240,11 @@ func WorkerPool(numJobs int, itemsPerWorker int, jobType string) ([]animeI.Anime
 	for j := 1; j <= numJobs; j++ {
 		rStr, err := csvReader.Read()
 		if err == io.EOF {
+
 			break
 		}
 		if err != nil {
+
 			break
 		}
 		jobs <- rStr

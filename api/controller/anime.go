@@ -19,6 +19,7 @@ func GetAllAnimes(w http.ResponseWriter, r *http.Request) {
 	response := animeU.GetAllAnimes()
 	if response == nil {
 		responseHandle(w, nil, http.StatusInternalServerError)
+
 		return
 	}
 
@@ -39,6 +40,7 @@ func PostAnimeById(w http.ResponseWriter, r *http.Request) {
 	httpStatus := animeU.PostAnimeById(id)
 	if httpStatus == http.StatusInternalServerError {
 		responseHandle(w, nil, http.StatusInternalServerError)
+
 		return
 	}
 
@@ -51,7 +53,6 @@ func GetAnimesWorker(w http.ResponseWriter, r *http.Request) {
 	items, _ := strconv.Atoi(itemsQuery)
 	itemsW := mux.Vars(r)["items_per_workers"]
 	itemsPerWorker, _ := strconv.Atoi(itemsW)
-
 	jobType := mux.Vars(r)["type"]
 
 	animes, _ := animeU.WorkerPool(items, itemsPerWorker, jobType)
