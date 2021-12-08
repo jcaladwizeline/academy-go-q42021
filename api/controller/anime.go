@@ -1,7 +1,8 @@
 package controller
 
 import (
-	"fmt"
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -10,26 +11,36 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func HealthCheck(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Ok...")
+type ControllerInterfaceGet interface {
+	Get(w http.ResponseWriter, r *http.Request)
 }
 
 func GetAllAnimes(w http.ResponseWriter, r *http.Request) {
-	response := animeU.GetAllAnimes()
-	if response == nil {
-		responseHandle(w, nil, http.StatusInternalServerError)
+	response, status, err := animeU.GetAllAnimes()
+	if err != nil {
+		http.Error(w, err.Error(), status)
 
 		return
 	}
 
-	responseHandle(w, response, http.StatusOK)
+	responseHandle(w, response, status)
 }
 
 func GetAnimeById(w http.ResponseWriter, r *http.Request) {
 	// check params
 	id := mux.Vars(r)["id"]
-	response := animeU.GetAnimeById(id)
+	animeID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+	response, err := animeU.GetAnimeById(animeID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
 
 	responseHandle(w, response, http.StatusOK)
 }
@@ -37,25 +48,48 @@ func GetAnimeById(w http.ResponseWriter, r *http.Request) {
 func PostAnimeById(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	httpStatus := animeU.PostAnimeById(id)
-	if httpStatus == http.StatusInternalServerError {
-		responseHandle(w, nil, http.StatusInternalServerError)
+	response, err := animeU.PostAnimeById(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Ok...")
+	responseHandle(w, response, http.StatusOK)
 }
 
 func GetAnimesWorker(w http.ResponseWriter, r *http.Request) {
-	itemsQuery := mux.Vars(r)["items"]
-	items, _ := strconv.Atoi(itemsQuery)
-	itemsW := mux.Vars(r)["items_per_workers"]
-	itemsPerWorker, _ := strconv.Atoi(itemsW)
-	jobType := mux.Vars(r)["type"]
+	itemsQuery := r.FormValue("items")
+	items, err := strconv.Atoi(itemsQuery)
+	if err != nil && itemsQuery != "" {
+		log.Println("Unable convert string into int", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 
-	animes, _ := animeU.WorkerPool(items, itemsPerWorker, jobType)
+		return
+	}
+	itemsW := r.FormValue("items_per_workers")
+	itemsPerWorker, err := strconv.Atoi(itemsW)
+	if err != nil && itemsW != "" {
+		log.Println("Unable convert string into int", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+	jobType := r.FormValue("type")
+	if (jobType != "odd" && jobType != "even") && jobType != "" {
+		log.Println("Unable convert string into int", err)
+		http.Error(w, errors.New("type value ").Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	animes, err := animeU.WorkerPool(items, itemsPerWorker, jobType)
+	if err != nil {
+		log.Println("Unable convert string into int", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
 
 	responseHandle(w, animes, http.StatusInternalServerError)
 }

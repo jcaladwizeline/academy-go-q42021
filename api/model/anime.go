@@ -1,6 +1,6 @@
 package model
 
-type AnimeStruct struct {
+type Anime struct {
 	AnimeID  int    `json:"anime_id"`
 	Title    string `json:"title"`
 	Synopsis string `json:"synopsis"`

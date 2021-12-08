@@ -10,7 +10,6 @@ func responseHandle(w http.ResponseWriter, data interface{}, status int) {
 	w.WriteHeader(status)
 
 	if data == nil {
-
 		return
 	}
 	js, _ := json.Marshal(data)
